@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Importer un répertoire</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333333;
+            margin-bottom: 20px;
+        }
+
+        form {
+            margin-top: 20px;
+        }
+
+        button[type="submit"] {
+            width: 100%;
+            padding: 12px;
+            background-color: #4CAF50;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #45a049;
+        }
+
+        #progressBar {
+            width: 100%;
+            height: 30px;
+            background-color: #f2f2f2;
+            margin-top: 20px;
+        }
+
+        #progressBar .progress {
+            width: 0%;
+            height: 100%;
+            background-color: #4CAF50;
+            text-align: center;
+            line-height: 30px;
+            color: white;
+            border-radius: 5px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0 0 20px 0;
+            text-align: left;
+        }
+
+        ul li {
+            color: #666666;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Importer un répertoire</h1>
+        
+        {% if messages %}
+            <ul>
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        
+        <form id="importForm" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Importer</button>
+        </form>
+
+        <div id="progressBar">
+            <div class="progress">0%</div>
+        </div>
+    </div>
+
+    <script>
+        // Attacher un gestionnaire d'événements à la soumission du formulaire
+        document.getElementById('importForm').addEventListener('submit', function(event) {
+            // Empêcher le comportement par défaut de soumission du formulaire
+            event.preventDefault();
+
+            // Créer une requête AJAX pour suivre le progrès du chargement
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/importer_repertoire/', true);
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+            // Mettre à jour la barre de progression pendant le chargement
+            xhr.upload.onprogress = function(event) {
+                if (event.lengthComputable) {
+                    var percentComplete = (event.loaded / event.total) * 100;
+                    document.querySelector('.progress').innerHTML = percentComplete.toFixed(2) + '%';
+                    document.querySelector('.progress').style.width = percentComplete.toFixed(2) + '%';
+                }
+            };
+
+            // Gérer la réponse de la requête AJAX
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    // Récupérer le pourcentage de progression à partir de la réponse JSON
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.progress === 100) {
+                        // Afficher un message de succès lorsque le chargement est terminé
+                        document.querySelector('.progress').innerHTML = 'Importation terminée.';
+                    }
+                } else {
+                    // Afficher un message d'erreur en cas d'échec
+                    document.querySelector('.progress').innerHTML = 'Erreur lors de l\'importation.';
+                }
+            };
+
+            // Envoyer la requête
+            xhr.send(new FormData(this));
+        });
+    </script>
+</body>
+</html>

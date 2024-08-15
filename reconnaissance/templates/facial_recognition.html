@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>EXA-FACE</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            text-align: center;
+        }
+
+        .app-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #333333;
+            margin-bottom: 20px;
+        }
+
+        form {
+            margin-top: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #666666;
+            font-size: 14px;
+            text-align: left;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #cccccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        .video-container {
+            margin-bottom: 20px;
+        }
+
+        video {
+            width: 100%;
+            border-radius: 5px;
+        }
+
+        button[type="button"], 
+        button[type="submit"] {
+            width: 100%;
+            padding: 12px;
+            background-color: #4CAF50;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        button[type="button"]:hover, 
+        button[type="submit"]:hover {
+            background-color: #45a049;
+        }
+
+        canvas {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="app-name">EXA-FACE</div>
+        <h1>Facial Recognition</h1>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <br>
+            <label for="label">Enter the label:</label>
+            <input type="text" name="label" id="label">
+            <br>
+
+            <!-- Elements for live capture -->
+            <div>
+                <video id="video" width="320" height="240" autoplay></video>
+                <button type="button" id="capture">Capture</button>
+            </div>
+            <canvas id="canvas" style="display:none;"></canvas>
+            <input type="hidden" name="captured_image" id="captured_image">
+
+            <br>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+
+    <script>
+        // Access the camera and capture video
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const capturedImageInput = document.getElementById('captured_image');
+        const captureButton = document.getElementById('capture');
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then((stream) => {
+                video.srcObject = stream;
+            })
+            .catch((err) => {
+                console.error("Error accessing the camera: ", err);
+            });
+
+        // Capture the image from the video stream
+        captureButton.addEventListener('click', () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convert the image to base64 and set it as the value of the hidden input
+            const dataURL = canvas.toDataURL('image/png');
+            capturedImageInput.value = dataURL;
+            console.log("Captured Image Data URL:", dataURL);  // Log the captured image data URL for debugging
+        });
+    </script>
+</body>
+</html>
